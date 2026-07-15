@@ -330,6 +330,7 @@
         }
 
         // ==================== TIKTOK FUNCIONALIDAD ====================
+        // ==================== TIKTOK FUNCIONALIDAD ====================
         async function descargarTikTok() {
             let urlInput = document.getElementById("ttUrl").value.trim();
             const loadingDiv = document.getElementById("ttLoading");
@@ -340,7 +341,7 @@
                 return;
             }
 
-            // Corrección ortográfica automática
+            // Corrección ortográfica automática por si acaso
             urlInput = urlInput.replace(/tikok\.com/i, "tiktok.com");
 
             if (!urlInput.includes("tiktok.com")) {
@@ -350,33 +351,14 @@
 
             resultBox.style.display = "none";
             loadingDiv.style.display = "block";
-            loadingDiv.innerHTML = "Verificando enlace móvil... 📱💻";
+            loadingDiv.innerHTML = "Procesando enlace... 📱💻";
 
-            // --- RESOLVER URL CORTA DE CELULAR ---
-            if (urlInput.includes("vt.") || urlInput.includes("vm.") || urlInput.includes("/t/")) {
-                loadingDiv.innerHTML = "Traduciendo enlace de celular... ⚙️";
-                try {
-                    const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(urlInput)}`);
-                    if (response.ok) {
-                        const resJSON = await response.json();
-                        if (resJSON.contents) {
-                            const matchUrl = resJSON.contents.match(/"(https:\/\/www\.tiktok\.com\/@[^\/]+\/video\/[0-9]+)"/i) ||
-                                resJSON.contents.match(/<link[^>]+rel="canonical"[^>]+href="([^"]+)"/i);
-                            if (matchUrl && matchUrl[1]) {
-                                urlInput = matchUrl[1];
-                                console.log("URL de TikTok resuelta con éxito:", urlInput);
-                            }
-                        }
-                    }
-                } catch (err) {
-                    console.warn("Error resolviendo URL corta, se enviará original.", err);
-                }
-            }
+            // NOTA: Con esta nueva API ya no necesitamos traducir el enlace de celular en el código.
+            // La API recibe el enlace (vt.tiktok o largo) directamente y lo procesa en su servidor.
 
-            loadingDiv.innerHTML = "Removiendo marca de agua desde el servidor... 🚀";
-
-            const apiHost = "social-media-video-downloader-no-watermark.p.rapidapi.com";
-            const apiUrl = `https://${apiHost}/api/v1/video`;
+            // DATOS EXACTOS DE TU NUEVA CAPTURA DE PANTALLA
+            const apiHost = "tiktok-video-downloader-api1.p.rapidapi.com";
+            const apiUrl = `https://${apiHost}/api/tiktok/links`;
 
             try {
                 const respuesta = await fetch(apiUrl, {
@@ -395,31 +377,21 @@
                 console.log("Respuesta completa de TikTok:", data);
                 loadingDiv.style.display = "none";
 
-                // Mapeo adaptado con precisión para la respuesta de la API "social-media-video-downloader-no-watermark"
                 let videoDirectUrl = "";
                 let audioDirectUrl = "";
                 let tituloVideo = "Video de TikTok";
                 let thumbnailVideo = "";
 
-                // Esta API suele estructurar las descargas en un array de enlaces o bajo un objeto principal.
-                // Evaluamos los nodos más comunes en este backend:
-                if (data.links && data.links.length > 0) {
-                    // Si viene como lista de links, buscamos el video sin marca de agua
-                    const hdVideo = data.links.find(l => l.type === 'video' || l.quality === 'hd' || l.quality === 'watermark_removed');
-                    const anyVideo = data.links.find(l => l.type === 'video');
-                    const anyAudio = data.links.find(l => l.type === 'audio');
+                // Mapeo adaptado a la respuesta de esta API (usualmente entrega un nodo de descarga directa)
+                const resObj = data.data || data;
 
-                    videoDirectUrl = hdVideo ? hdVideo.link : (anyVideo ? anyVideo.link : "");
-                    audioDirectUrl = anyAudio ? anyAudio.link : "";
-                } else {
-                    // Estructura alternativa directa
-                    const target = data.data || data;
-                    videoDirectUrl = target.hd_video || target.video_no_watermark || target.video || target.url || "";
-                    audioDirectUrl = target.audio || target.music || target.musicUrl || "";
+                if (resObj) {
+                    // Extraer el video sin marca de agua (no_watermark, play, hd, etc.)
+                    videoDirectUrl = resObj.play || resObj.video || resObj.no_watermark || resObj.download_url || "";
+                    audioDirectUrl = resObj.music || resObj.audio || "";
+                    tituloVideo = resObj.title || resObj.description || "Video de TikTok";
+                    thumbnailVideo = resObj.cover || resObj.thumbnail || "";
                 }
-
-                tituloVideo = data.title || data.description || (data.data && data.data.title) || "Video de TikTok";
-                thumbnailVideo = data.thumbnail || data.cover || (data.data && data.data.cover) || "";
 
                 if (videoDirectUrl) {
                     resultBox.innerHTML = `
@@ -436,7 +408,10 @@
                     `;
                     resultBox.style.display = "block";
                 } else {
-                    resultBox.innerHTML = `<p style="color: #ff3366; font-size: 13px;">No se pudo extraer el enlace de este video.</p>`;
+                    resultBox.innerHTML = `
+                        <p style="color: #ff3366; font-size: 13px;">No se pudo extraer el enlace de este video.</p>
+                        <p style="font-size: 11px; color: #999; margin-top: 5px;">Detalles: El servidor no devolvió una URL de reproducción directa.</p>
+                    `;
                     resultBox.style.display = "block";
                 }
             } catch (error) {
