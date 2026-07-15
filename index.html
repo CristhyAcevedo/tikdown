@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TikDown Pro - Descargador de TikTok e Instagram</title>
+    <title>InstaDown - Descargador de Instagram</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         * {
@@ -15,8 +15,8 @@
         }
 
         body {
-            background: linear-gradient(135deg, #1f1c2c, #928dab);
-            color: #fff;
+            background: linear-gradient(135deg, #fdfcfb 0%, #e2d1c3 100%);
+            color: #333;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -25,46 +25,29 @@
         }
 
         .container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 30px;
-            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 40px 30px;
+            border-radius: 24px;
             width: 100%;
-            max-width: 550px;
+            max-width: 500px;
             text-align: center;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
         }
 
         h1 {
-            font-size: 2.2rem;
+            font-size: 2.4rem;
             font-weight: 700;
-            margin-bottom: 5px;
-            background: linear-gradient(to right, #00f2fe, #4facfe);
+            margin-bottom: 8px;
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
         .subtitle {
             font-size: 0.95rem;
-            color: #ddd;
-            margin-bottom: 25px;
-        }
-
-        .supported-info {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .badge {
-            background: rgba(255, 255, 255, 0.15);
-            padding: 5px 12px;
-            border-radius: 15px;
-            font-size: 0.8rem;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #666;
+            margin-bottom: 30px;
         }
 
         .input-group {
@@ -74,43 +57,47 @@
 
         input {
             width: 100%;
-            padding: 15px 20px;
-            border: none;
+            padding: 16px 24px;
+            border: 2px solid #ddd;
             border-radius: 50px;
-            background: rgba(255, 255, 255, 0.9);
+            background: #fff;
             color: #333;
             font-size: 1rem;
             outline: none;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus {
+            border-color: #dc2743;
         }
 
         input::placeholder {
-            color: #777;
+            color: #aaa;
         }
 
         button {
             width: 100%;
-            padding: 15px;
+            padding: 16px;
             border: none;
             border-radius: 50px;
-            background: linear-gradient(45deg, #00f2fe, #4facfe);
+            background: linear-gradient(45deg, #f09433, #dc2743, #bc1888);
             color: white;
             font-size: 1.1rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+            box-shadow: 0 4px 15px rgba(220, 39, 67, 0.3);
         }
 
         button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.6);
+            box-shadow: 0 6px 20px rgba(220, 39, 67, 0.5);
         }
 
         .helper-text {
             font-size: 0.8rem;
-            color: #eee;
-            margin-top: 8px;
+            color: #888;
+            margin-top: 10px;
             line-height: 1.4;
         }
 
@@ -119,17 +106,17 @@
             margin-top: 20px;
             font-size: 1rem;
             font-weight: 600;
-            color: #00f2fe;
+            color: #dc2743;
         }
 
         #resultBox {
             display: none;
             margin-top: 25px;
-            background: white;
+            background: #fafafa;
             color: #333;
             padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            border-radius: 18px;
+            border: 1px solid #eee;
             text-align: center;
         }
 
@@ -140,7 +127,7 @@
             margin-top: 10px;
             color: white;
             text-decoration: none;
-            border-radius: 8px;
+            border-radius: 10px;
             font-weight: bold;
             font-size: 0.95rem;
             transition: opacity 0.2s;
@@ -151,11 +138,11 @@
         }
 
         .btn-video {
-            background-color: #25D366;
+            background: linear-gradient(45deg, #dc2743, #cc2366);
         }
 
         .btn-audio {
-            background-color: #ff3366;
+            background-color: #333;
         }
     </style>
 </head>
@@ -163,66 +150,68 @@
 <body>
 
     <div class="container">
-        <h1>TikDown Pro</h1>
-        <p class="subtitle">Descarga desde TikTok o Instagram con el mismo enlace</p>
-
-        <div class="supported-info">
-            <span class="badge">📱 Enlaces de Celular</span>
-            <span class="badge">💻 Enlaces de PC</span>
-            <span class="badge">🎵 Audio MP3</span>
-        </div>
+        <h1>InstaDown</h1>
+        <p class="subtitle">Descarga Reels, Videos y Fotos de Instagram</p>
 
         <div class="input-group">
-            <input type="text" id="videoUrl" placeholder="Pega el enlace de TikTok o Instagram aquí...">
+            <input type="text" id="videoUrl" placeholder="Pega el enlace de Instagram aquí...">
             <p class="helper-text">
-                Funciona con enlaces normales (<code>https://www...</code>) y enlaces cortos de celular
-                (<code>vt.tiktok...</code>, <code>vm.tiktok...</code>).
+                Compatible con enlaces copiados de la app del celular (Reels, publicaciones, etc.)
             </p>
         </div>
 
-        <button type="button" onclick="buscarVideo();">Obtener Descarga</button>
+        <button type="button" onclick="descargarInstagram();">Descargar Multimedia</button>
 
-        <div id="loading">Analizando enlace... Por favor espera.</div>
+        <div id="loading">Limpiando enlace y conectando con Instagram...</div>
 
         <div id="resultBox"></div>
     </div>
 
     <script>
-        async function buscarVideo() {
+        async function descargarInstagram() {
             let urlInput = document.getElementById("videoUrl").value.trim();
             const loadingDiv = document.getElementById("loading");
             const resultBox = document.getElementById("resultBox");
 
             if (!urlInput) {
-                alert("Por favor, pega un enlace válido.");
+                alert("Por favor, pega un enlace de Instagram.");
                 return;
             }
 
-            // Corrección ortográfica automática en caliente
-            urlInput = urlInput.replace(/tikok\.com/i, "tiktok.com");
-            urlInput = urlInput.replace(/http[s]?\s*>?\s*\/?\/?/i, "https://");
+            if (!urlInput.includes("instagram.com")) {
+                alert("El enlace no parece ser de Instagram.");
+                return;
+            }
 
             resultBox.style.display = "none";
             loadingDiv.style.display = "block";
-            loadingDiv.innerHTML = "Procesando enlace con la nueva API unificada... 🚀";
+            loadingDiv.innerHTML = "Limpiando enlace de celular... 📱🧹";
 
-            // Datos de la API "Social Media Video Downloader (No Watermark)"
+            // --- TRUCO CLAVE: Limpiar parámetros de rastreo del celular (?utm_source... etc) ---
+            if (urlInput.includes("?")) {
+                urlInput = urlInput.split("?")[0];
+            }
+            // Asegurar protocolo seguro
+            if (!urlInput.startsWith("http")) {
+                urlInput = "https://" + urlInput;
+            }
+
+            console.log("Enlace limpio enviado a la API:", urlInput);
+
+            loadingDiv.innerHTML = "Extrayendo video sin marca de agua... 📥";
+
+            // Tu configuración de API activa de Instagram
             const apiKey = "ce4f3137a6msh147a7c0728f1066p18b384jsn9a92f89e1387";
-            const apiHost = "social-media-video-downloader-no-watermark.p.rapidapi.com";
-            const apiUrl = `https://${apiHost}/api/v1/video`;
+            const apiHost = "instagram-downloader-download-instagram-videos-stories1.p.rapidapi.com";
+            const apiUrl = `https://${apiHost}/get-info-rapidapi?url=${encodeURIComponent(urlInput)}`;
 
             try {
-                // Hacemos una petición POST enviando el enlace en formato JSON
                 const respuesta = await fetch(apiUrl, {
-                    method: "POST",
+                    method: "GET",
                     headers: {
-                        "Content-Type": "application/json",
                         "x-rapidapi-key": apiKey,
                         "x-rapidapi-host": apiHost
-                    },
-                    body: JSON.stringify({
-                        url: urlInput
-                    })
+                    }
                 });
 
                 const data = await respuesta.json();
@@ -230,47 +219,33 @@
 
                 loadingDiv.style.display = "none";
 
-                // Extraemos la información devuelta por la API
-                // Evaluamos si viene envuelto en un nodo "data" o directamente en la raíz
-                const resObj = data.data || data;
-
-                let videoDirectUrl = "";
-                let audioDirectUrl = "";
-                let tituloVideo = "Multimedia Descargada";
-                let thumbnailVideo = "";
-
-                if (resObj) {
-                    // Mapeo flexible de propiedades (hd_video, url o video)
-                    videoDirectUrl = resObj.hd_video || resObj.video || resObj.url || "";
-                    audioDirectUrl = resObj.audio || resObj.music || "";
-                    tituloVideo = resObj.title || resObj.description || "Video Procesado con éxito";
-                    thumbnailVideo = resObj.thumbnail || resObj.cover || "";
-                }
+                // Extraemos las respuestas multimedia
+                let videoDirectUrl = data.url || data.download_url || data.media || (data.links && data.links[0]?.link) || "";
+                let audioDirectUrl = data.audio || "";
+                let tituloVideo = data.title || "Publicación de Instagram";
+                let thumbnailVideo = data.thumbnail || data.cover || "";
 
                 if (videoDirectUrl) {
-                    const esInstagram = urlInput.includes("instagram.com");
-
                     resultBox.innerHTML = `
                         <div style="margin-bottom: 15px;">
-                            ${thumbnailVideo ? `<img src="${thumbnailVideo}" alt="Miniatura" style="max-width: 110px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">` : ""}
-                            <h3 style="margin: 5px 0; font-size: 15px; color: #333; font-weight: 600;">${tituloVideo}</h3>
-                            <p style="margin: 5px 0; color: #666; font-size: 13px;">Plataforma: <strong>${esInstagram ? 'Instagram' : 'TikTok'}</strong></p>
+                            ${thumbnailVideo ? `<img src="${thumbnailVideo}" alt="Miniatura" style="max-width: 120px; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">` : ""}
+                            <h3 style="margin: 5px 0; font-size: 15px; color: #333; font-weight: 600; line-height: 1.4;">${tituloVideo}</h3>
                         </div>
                         
-                        <p style="font-weight: bold; margin-bottom: 12px; font-size: 14px; color: #222;">¡Enlaces listos para descargar!</p>
+                        <p style="font-weight: bold; margin-bottom: 12px; font-size: 14px; color: #555;">¡Archivos listos para descargar!</p>
                         
-                        <a href="${videoDirectUrl}" target="_blank" download="video.mp4" class="download-btn btn-video">
-                            🎥 Descargar Video (Sin Marca de Agua)
+                        <a href="${videoDirectUrl}" target="_blank" download="instagram_video.mp4" class="download-btn btn-video">
+                            🎥 Descargar Video (.MP4)
                         </a>
 
-                        <a href="${audioDirectUrl || videoDirectUrl}" target="_blank" download="audio.mp3" class="download-btn btn-audio">
-                            🎵 Descargar Solo Audio (MP3)
+                        <a href="${audioDirectUrl || videoDirectUrl}" target="_blank" download="instagram_audio.mp3" class="download-btn btn-audio">
+                            🎵 Descargar Solo Audio (.MP3)
                         </a>
                     `;
                     resultBox.style.display = "block";
                 } else {
                     resultBox.innerHTML = `
-                        <p style="color: red; margin: 0; font-weight: 600;">No se pudo procesar este enlace.</p>
+                        <p style="color: red; margin: 0; font-weight: 600;">No se pudo extraer la descarga de este enlace.</p>
                         <p style="font-size: 11px; color: #999; margin-top: 5px;">Detalles técnicos: ${JSON.stringify(data)}</p>
                     `;
                     resultBox.style.display = "block";
@@ -279,7 +254,7 @@
             } catch (error) {
                 console.error("Error en la petición:", error);
                 loadingDiv.style.display = "none";
-                resultBox.innerHTML = `<p style="color: red; margin: 0;">Hubo un error al conectar con el servidor de la API. Inténtalo de nuevo.</p>`;
+                resultBox.innerHTML = `<p style="color: red; margin: 0;">Hubo un error de conexión con la API de Instagram. Inténtalo de nuevo.</p>`;
                 resultBox.style.display = "block";
             }
         }
