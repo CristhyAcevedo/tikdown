@@ -284,8 +284,8 @@
             loadingDiv.innerHTML = "Extrayendo multimedia de Instagram... 📥";
 
             const apiHost = "instagram-downloader-download-instagram-videos-stories1.p.rapidapi.com";
-            const apiUrl = `https://${apiHost}/get-info-rapidapi?url=${encodeURIComponent(urlInput)}`;
-
+            // Usamos corsproxy.io como puente seguro para evitar el bloqueo de conexión
+            const apiUrl = `https://corsproxy.io/?${encodeURIComponent(`https://${apiHost}/api/tiktok/links`)}`;
             try {
                 const respuesta = await fetch(apiUrl, {
                     method: "GET",
