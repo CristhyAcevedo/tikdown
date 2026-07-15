@@ -198,58 +198,70 @@
             loadingDiv.style.display = "block";
             loadingDiv.innerHTML = "Procesando video... Por favor espera.";
 
-            // Configuración con tus credenciales de RapidAPI
+            // CONFIGURACIÓN DE TU NUEVA API (TRAÍDA DESDE TU CAPTURA DE PANTALLA)
             const apiKey = "ce4f3137a6msh147a7c0728f1066p18b384jsn9a92f89e1387";
-            const apiHost = "all-social-media-video-downloader3.p.rapidapi.com";
-
-            const detallesEnvio = new URLSearchParams();
-            detallesEnvio.append("url", urlInput);
+            const apiHost = "tiktok-downloader26.p.rapidapi.com";
 
             try {
-                const respuesta = await fetch(`https://${apiHost}/index.php`, {
-                    method: "POST",
+                // Al ser un método GET, enviamos la URL directamente como parámetro en el enlace
+                const respuesta = await fetch(`https://${apiHost}/v1/tiktok?url=${encodeURIComponent(urlInput)}`, {
+                    method: "GET",
                     headers: {
-                        "Content-Type": "application/x-www-form-urlencoded",
                         "x-rapidapi-key": apiKey,
                         "x-rapidapi-host": apiHost
-                    },
-                    body: detallesEnvio
+                    }
                 });
 
                 const data = await respuesta.json();
-                console.log(data); // Imprime el JSON completo para auditoría en consola
+                console.log("Respuesta de la nueva API:", data);
 
                 loadingDiv.style.display = "none";
 
-                // CONDICIÓN CORREGIDA: Leemos directamente la propiedad "url" que entrega tu API
-                if (data.success && data.url) {
-                    const videoDirectUrl = data.url;
-                    const tituloVideo = data.title || "Video Descargado";
-                    const autorVideo = data.author || "Desconocido";
-                    const thumbnailVideo = data.thumbnail || "";
+                // Esta API suele estructurar los datos dentro de un objeto 'data' o directo en la raíz.
+                // Evaluamos de forma inteligente las propiedades comunes para extraer el video sin marca de agua (no_watermark / no_wm / video)
+                const resData = data.data || data;
 
-                    // Inyectamos la información dentro de la tarjeta de resultado
+                let videoDirectUrl = "";
+                if (resData.no_watermark) {
+                    videoDirectUrl = resData.no_watermark;
+                } else if (resData.video) {
+                    videoDirectUrl = resData.video;
+                } else if (resData.play) {
+                    videoDirectUrl = resData.play;
+                } else if (resData.links && resData.links[0]) {
+                    videoDirectUrl = resData.links[0].link || resData.links[0];
+                }
+
+                const tituloVideo = resData.title || resData.description || "Video Descargado";
+                const autorVideo = resData.author?.nickname || resData.author || "Desconocido";
+                const thumbnailVideo = resData.cover || resData.thumbnail || "";
+
+                // Si la API respondió con un enlace de video válido
+                if (videoDirectUrl) {
                     resultBox.innerHTML = `
-                        <div style="margin-bottom: 15px;">
-                            ${thumbnailVideo ? `<img src="${thumbnailVideo}" alt="Miniatura" style="max-width: 120px; border-radius: 6px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">` : ""}
-                            <h3 style="margin: 5px 0; font-size: 16px; color: #333;">${tituloVideo}</h3>
-                            <p style="margin: 5px 0; color: #777; font-size: 14px;">Autor: ${autorVideo}</p>
-                        </div>
-                        <p><strong>¡Video encontrado!</strong> Ya puedes descargarlo sin marca de agua.</p>
-                        <a href="${videoDirectUrl}" target="_blank" download="video.mp4" class="download-btn">
-                            📥 Descargar Video (.MP4)
-                        </a>
-                    `;
+                <div style="margin-bottom: 15px;">
+                    ${thumbnailVideo ? `<img src="${thumbnailVideo}" alt="Miniatura" style="max-width: 120px; border-radius: 6px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">` : ""}
+                    <h3 style="margin: 5px 0; font-size: 16px; color: #333;">${tituloVideo}</h3>
+                    <p style="margin: 5px 0; color: #777; font-size: 14px;">Autor: ${autorVideo}</p>
+                </div>
+                <p><strong>¡Video encontrado!</strong> Ya puedes descargarlo sin marca de agua.</p>
+                <a href="${videoDirectUrl}" target="_blank" download="video.mp4" class="download-btn">
+                    📥 Descargar Video (.MP4)
+                </a>
+            `;
                     resultBox.style.display = "block";
                 } else {
-                    resultBox.innerHTML = `<p style="color: red; margin: 0;">No se pudo obtener el enlace de descarga. Intenta con otro video.</p>`;
+                    resultBox.innerHTML = `
+                <p style="color: red; margin: 0;">No se pudo procesar la descarga de este video.</p>
+                <p style="font-size: 11px; color: #999; margin-top: 5px;">Estructura del servidor: ${JSON.stringify(data)}</p>
+            `;
                     resultBox.style.display = "block";
                 }
 
             } catch (error) {
-                console.error(error);
+                console.error("Error en la petición:", error);
                 loadingDiv.style.display = "none";
-                resultBox.innerHTML = `<p style="color: red; margin: 0;">Hubo un error al conectar con el servidor. Inténtalo de nuevo más tarde.</p>`;
+                resultBox.innerHTML = `<p style="color: red; margin: 0;">Hubo un problema al conectar con el servidor. Inténtalo más tarde.</p>`;
                 resultBox.style.display = "block";
             }
         }
