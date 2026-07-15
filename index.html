@@ -161,9 +161,6 @@
         <div id="loading" style="display: none; margin-top: 1.5rem; color: #888;">Procesando video...</div>
 
         <div id="resultBox" class="result-box">
-            <p><strong>¡Video encontrado!</strong> Ya puedes descargarlo sin marca de agua.</p>
-            <a href="#" id="downloadLink" class="download-btn" target="_blank" download="video.mp4">Descargar Video
-                (.MP4)</a>
         </div>
     </div>
 
@@ -224,13 +221,14 @@
 
                 loadingDiv.style.display = "none";
 
-                if (data.success && data.links && data.links.length > 0) {
-                    const videoDirectUrl = data.links[0].link;
+                // CONDICIÓN CORREGIDA: Leemos directamente la propiedad "url" que entrega tu API
+                if (data.success && data.url) {
+                    const videoDirectUrl = data.url;
                     const tituloVideo = data.title || "Video Descargado";
                     const autorVideo = data.author || "Desconocido";
                     const thumbnailVideo = data.thumbnail || "";
 
-                    // Actualizar el contenido de resultBox con la información del video
+                    // Inyectamos la información dentro de la tarjeta de resultado
                     resultBox.innerHTML = `
                         <div style="margin-bottom: 15px;">
                             ${thumbnailVideo ? `<img src="${thumbnailVideo}" alt="Miniatura" style="max-width: 120px; border-radius: 6px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">` : ""}
@@ -238,7 +236,7 @@
                             <p style="margin: 5px 0; color: #777; font-size: 14px;">Autor: ${autorVideo}</p>
                         </div>
                         <p><strong>¡Video encontrado!</strong> Ya puedes descargarlo sin marca de agua.</p>
-                        <a href="${videoDirectUrl}" target="_blank" download class="download-btn">
+                        <a href="${videoDirectUrl}" target="_blank" download="video.mp4" class="download-btn">
                             📥 Descargar Video (.MP4)
                         </a>
                     `;
