@@ -197,6 +197,11 @@
                 return;
             }
 
+            // Auto-corregir errores de escritura comunes antes de empezar
+            // Reemplaza "tikok" por "tiktok" y limpia caracteres raros como > en el protocolo
+            urlInput = urlInput.replace(/tikok\.com/i, "tiktok.com");
+            urlInput = urlInput.replace(/http[s]?\s*>?\s*\/?\/?/i, "https://");
+
             resultBox.style.display = "none";
             loadingDiv.style.display = "block";
             loadingDiv.innerHTML = "Identificando plataforma... 🔍";
@@ -206,14 +211,19 @@
 
             if (!isInstagram && !isTikTok) {
                 loadingDiv.style.display = "none";
-                alert("Por favor, introduce un enlace que pertenezca a TikTok o Instagram.");
+                alert("Por favor, introduce un enlace válido de TikTok o Instagram.");
                 return;
             }
 
             // --- RESOLVER ENLACES CORTOS DE CELULAR (TIKTOK) ---
+            // Ahora es más flexible si viene con vt., vm. o t.
             if (isTikTok && (urlInput.includes("vt.") || urlInput.includes("vm.") || urlInput.includes("/t/"))) {
                 loadingDiv.innerHTML = "Procesando enlace de celular... 📱";
                 try {
+                    // Aseguramos que empiece bien con https:// para el proxy
+                    if (!urlInput.startsWith("http")) {
+                        urlInput = "https://" + urlInput;
+                    }
                     // Usamos un proxy que sigue la redirección y nos devuelve la URL final real de TikTok
                     const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(urlInput)}`);
                     if (response.url) {
@@ -221,7 +231,7 @@
                         console.log("Enlace de TikTok celular resuelto a:", urlInput);
                     }
                 } catch (err) {
-                    console.warn("No se pudo resolver el enlace corto, se intentará enviar directo.", err);
+                    console.warn("No se pudo resolver el enlace corto de forma automática, se intentará enviar directo.", err);
                 }
             }
 
@@ -260,13 +270,11 @@
                 let thumbnailVideo = "";
 
                 if (isInstagram) {
-                    // Extraer datos de tu API de Instagram suscrita
                     videoDirectUrl = data.url || data.download_url || data.media || (data.links && data.links[0]?.link) || "";
                     audioDirectUrl = data.audio || "";
                     tituloVideo = data.title || "Video de Instagram";
                     thumbnailVideo = data.thumbnail || data.cover || "";
                 } else {
-                    // Extraer datos de tu API de TikTok suscrita
                     if (data.videoUrlNoWatermark) {
                         videoDirectUrl = data.videoUrlNoWatermark;
                     } else if (data.video_no_watermark) {
@@ -286,30 +294,28 @@
 
                 if (videoDirectUrl) {
                     resultBox.innerHTML = `
-                        <div style="margin-bottom: 15px;">
-                            ${thumbnailVideo ? `<img src="${thumbnailVideo}" alt="Miniatura" style="max-width: 110px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">` : ""}
-                            <h3 style="margin: 5px 0; font-size: 15px; color: #333; font-weight: 600;">${tituloVideo}</h3>
-                            <p style="margin: 5px 0; color: #666; font-size: 13px;">Plataforma: <strong>${isInstagram ? 'Instagram' : 'TikTok'}</strong></p>
-                        </div>
-                        
-                        <p style="font-weight: bold; margin-bottom: 12px; font-size: 14px; color: #222;">¡Enlaces listos para descargar!</p>
-                        
-                        <!-- BOTÓN VIDEO -->
-                        <a href="${videoDirectUrl}" target="_blank" download="video.mp4" class="download-btn btn-video">
-                            🎥 Descargar Video Completo
-                        </a>
+                <div style="margin-bottom: 15px;">
+                    ${thumbnailVideo ? `<img src="${thumbnailVideo}" alt="Miniatura" style="max-width: 110px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">` : ""}
+                    <h3 style="margin: 5px 0; font-size: 15px; color: #333; font-weight: 600;">${tituloVideo}</h3>
+                    <p style="margin: 5px 0; color: #666; font-size: 13px;">Plataforma: <strong>${isInstagram ? 'Instagram' : 'TikTok'}</strong></p>
+                </div>
+                
+                <p style="font-weight: bold; margin-bottom: 12px; font-size: 14px; color: #222;">¡Enlaces listos para descargar!</p>
+                
+                <a href="${videoDirectUrl}" target="_blank" download="video.mp4" class="download-btn btn-video">
+                    🎥 Descargar Video Completo
+                </a>
 
-                        <!-- BOTÓN AUDIO (si no hay audio por separado, usa el mismo video para reproducir el sonido) -->
-                        <a href="${audioDirectUrl || videoDirectUrl}" target="_blank" download="audio.mp3" class="download-btn btn-audio">
-                            🎵 Descargar Solo Audio (MP3)
-                        </a>
-                    `;
+                <a href="${audioDirectUrl || videoDirectUrl}" target="_blank" download="audio.mp3" class="download-btn btn-audio">
+                    🎵 Descargar Solo Audio (MP3)
+                </a>
+            `;
                     resultBox.style.display = "block";
                 } else {
                     resultBox.innerHTML = `
-                        <p style="color: red; margin: 0; font-weight: 600;">No se pudo procesar este enlace.</p>
-                        <p style="font-size: 11px; color: #999; margin-top: 5px;">Detalles técnicos: ${JSON.stringify(data)}</p>
-                    `;
+                <p style="color: red; margin: 0; font-weight: 600;">No se pudo procesar este enlace.</p>
+                <p style="font-size: 11px; color: #999; margin-top: 5px;">Detalles técnicos: ${JSON.stringify(data)}</p>
+            `;
                     resultBox.style.display = "block";
                 }
 
