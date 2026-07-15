@@ -276,7 +276,6 @@
             loadingDiv.style.display = "block";
             loadingDiv.innerHTML = "Limpiando enlace... 🧹";
 
-            // Quitar parámetros extras de rastreo del celular
             if (urlInput.includes("?")) {
                 urlInput = urlInput.split("?")[0];
             }
@@ -284,8 +283,8 @@
             loadingDiv.innerHTML = "Extrayendo multimedia de Instagram... 📥";
 
             const apiHost = "instagram-downloader-download-instagram-videos-stories1.p.rapidapi.com";
-            // Usamos corsproxy.io como puente seguro para evitar el bloqueo de conexión
-            const apiUrl = `https://corsproxy.io/?${encodeURIComponent(`https://${apiHost}/api/tiktok/links`)}`;
+            const apiUrl = `https://${apiHost}/get-info-rapidapi?url=${encodeURIComponent(urlInput)}`;
+
             try {
                 const respuesta = await fetch(apiUrl, {
                     method: "GET",
@@ -331,71 +330,40 @@
 
 
         // ==================== TIKTOK FUNCIONALIDAD ====================
-        // ==================== TIKTOK FUNCIONALIDAD ====================
-        async function procesarDescarga() {
-            let urlInput = document.getElementById("mediaUrl").value.trim();
-            const loadingDiv = document.getElementById("loading");
-            const resultBox = document.getElementById("resultBox");
+        async function descargarTikTok() {
+            let urlInput = document.getElementById("ttUrl").value.trim();
+            const loadingDiv = document.getElementById("ttLoading");
+            const resultBox = document.getElementById("ttResult");
 
             if (!urlInput) {
-                alert("Por favor, pega un enlace válido.");
+                alert("Por favor, pega un enlace de TikTok.");
                 return;
             }
 
             urlInput = urlInput.replace(/tikok\.com/i, "tiktok.com");
             urlInput = urlInput.replace(/http[s]?\s*>?\s*\/?\/?/i, "https://");
 
-            resultBox.style.display = "none";
-            loadingDiv.style.display = "block";
-            loadingDiv.innerHTML = "Identificando plataforma... 🔍";
-
-            const isInstagram = urlInput.includes("instagram.com");
-            const isTikTok = urlInput.includes("tiktok.com");
-
-            if (!isInstagram && !isTikTok) {
-                loadingDiv.style.display = "none";
-                alert("Por favor, introduce un enlace válido de TikTok o Instagram.");
+            if (!urlInput.includes("tiktok.com")) {
+                alert("El enlace no corresponde a TikTok.");
                 return;
             }
 
-            const apiKey = "ce4f3137a6msh147a7c0728f1066p18b384jsn9a92f89e1387";
+            resultBox.style.display = "none";
+            loadingDiv.style.display = "block";
+            loadingDiv.innerHTML = "Procesando enlace de TikTok... 🔍";
 
-            let apiUrl = "";
-            let apiHost = "";
-            let fetchOptions = {};
-
-            if (isInstagram) {
-                loadingDiv.innerHTML = "Procesando enlace de Instagram... 📸";
-                if (urlInput.includes("?")) {
-                    urlInput = urlInput.split("?")[0];
-                }
-                apiHost = "instagram-downloader-download-instagram-videos-stories1.p.rapidapi.com";
-                apiUrl = `https://${apiHost}/get-info-rapidapi?url=${encodeURIComponent(urlInput)}`;
-                fetchOptions = {
-                    method: "GET",
-                    headers: {
-                        "x-rapidapi-key": apiKey,
-                        "x-rapidapi-host": apiHost
-                    }
-                };
-            } else {
-                loadingDiv.innerHTML = "Procesando enlace de TikTok... 🎵";
-
-                // RUTA CORREGIDA CON ENFOQUE DIRECTO EN LA RAÍZ Y EL PARÁMETRO HD=1
-                apiHost = "tiktok-video-no-watermark2.p.rapidapi.com";
-                apiUrl = `https://${apiHost}/?url=${encodeURIComponent(urlInput)}&hd=1`;
-
-                fetchOptions = {
-                    method: "GET",
-                    headers: {
-                        "x-rapidapi-key": apiKey,
-                        "x-rapidapi-host": apiHost
-                    }
-                };
-            }
+            const apiHost = "tiktok-video-no-watermark2.p.rapidapi.com";
+            const apiUrl = `https://${apiHost}/?url=${encodeURIComponent(urlInput)}&hd=1`;
 
             try {
-                const respuesta = await fetch(apiUrl, fetchOptions);
+                const respuesta = await fetch(apiUrl, {
+                    method: "GET",
+                    headers: {
+                        "x-rapidapi-key": apiKeyShared,
+                        "x-rapidapi-host": apiHost
+                    }
+                });
+
                 const data = await respuesta.json();
                 console.log("Respuesta obtenida de la API:", data);
 
@@ -406,22 +374,12 @@
                 let tituloVideo = "Multimedia Encontrada";
                 let thumbnailVideo = "";
 
-                if (isInstagram) {
-                    videoDirectUrl = data.url || data.download_url || data.media || (data.links && data.links[0]?.link) || "";
-                    audioDirectUrl = data.audio || "";
-                    tituloVideo = data.title || "Video de Instagram";
-                    thumbnailVideo = data.thumbnail || data.cover || "";
-                } else {
-                    // Mapeo flexible adaptado para tiktok-video-no-watermark2
-                    // Buscamos dentro de la raíz o dentro del nodo "data"
-                    const resObj = data.data || data;
-                    if (resObj) {
-                        // El video HD suele estar en hdplay, play o wmplay
-                        videoDirectUrl = resObj.hdplay || resObj.play || resObj.wmplay || resObj.video || "";
-                        audioDirectUrl = resObj.music || resObj.audio || "";
-                        tituloVideo = resObj.title || resObj.description || "Video de TikTok";
-                        thumbnailVideo = resObj.cover || resObj.origin_cover || "";
-                    }
+                const resObj = data.data || data;
+                if (resObj) {
+                    videoDirectUrl = resObj.hdplay || resObj.play || resObj.wmplay || resObj.video || "";
+                    audioDirectUrl = resObj.music || resObj.audio || "";
+                    tituloVideo = resObj.title || resObj.description || "Video de TikTok";
+                    thumbnailVideo = resObj.cover || resObj.origin_cover || "";
                 }
 
                 if (videoDirectUrl) {
@@ -429,15 +387,15 @@
                         <div style="margin-bottom: 20px;">
                             ${thumbnailVideo ? `<img src="${thumbnailVideo}" alt="Miniatura" style="max-width: 120px; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">` : ""}
                             <h3 style="font-size: 15px; font-weight: 600; line-height: 1.4; color: #fff; margin-bottom: 5px;">${tituloVideo}</h3>
-                            <p style="font-size: 12px; color: #aaa;">Plataforma: <strong style="color: ${isInstagram ? '#ff007f' : '#00f2fe'};">${isInstagram ? 'Instagram' : 'TikTok'}</strong></p>
+                            <p style="font-size: 12px; color: #aaa;">Plataforma: <strong style="color: #00f2fe;">TikTok</strong></p>
                         </div>
                         
-                        <a href="${videoDirectUrl}" target="_blank" download="media_file.mp4" class="download-btn btn-video">
-                            🎥 Descargar Video Completo
+                        <a href="${videoDirectUrl}" target="_blank" download="tiktok_video.mp4" class="download-btn tt-dl-video">
+                            🎥 Descargar Video Completo (Sin Marca)
                         </a>
 
-                        <a href="${audioDirectUrl || videoDirectUrl}" target="_blank" download="media_audio.mp3" class="download-btn btn-audio">
-                            🎵 Descargar Solo Audio (MP3)
+                        <a href="${audioDirectUrl || videoDirectUrl}" target="_blank" download="tiktok_audio.mp3" class="download-btn tt-dl-audio">
+                            🎵 Descargar Música (MP3)
                         </a>
                     `;
                     resultBox.style.display = "block";
