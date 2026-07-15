@@ -198,14 +198,13 @@
             loadingDiv.style.display = "block";
             loadingDiv.innerHTML = "Procesando video... Por favor espera.";
 
-            // CONFIGURACIÓN EXACTA DE TU API SUSCRITA (DE TU PRIMERA CAPTURA)
+            // DATOS EXACTOS DE TU CAPTURA
             const apiKey = "ce4f3137a6msh147a7c0728f1066p18b384jsn9a92f89e1387";
             const apiHost = "tiktok-video-downloader-api.p.rapidapi.com";
 
             try {
-                // Usamos el endpoint '/download' pasándole la URL del video de TikTok
-                // REEMPLÁZALA POR ESTA (que es la que usa la API que tienes abierta en pantalla):
-                const respuesta = await fetch(`https://${apiHost}/v1/tiktok?url=${encodeURIComponent(urlInput)}`, {
+                // Ajustado a /media y usando ?videoUrl= como pide la API
+                const respuesta = await fetch(`https://${apiHost}/media?videoUrl=${encodeURIComponent(urlInput)}`, {
                     method: "GET",
                     headers: {
                         "x-rapidapi-key": apiKey,
@@ -218,13 +217,12 @@
 
                 loadingDiv.style.display = "none";
 
-                // Mapeamos los datos según el estándar de esta API
-                // Normalmente devuelve un objeto directo con 'video' o en un nodo interno
+                // Mapeamos de forma ultra-flexible según lo que suele devolver este endpoint específico
                 let videoDirectUrl = "";
-                if (data.video) {
-                    videoDirectUrl = data.video;
-                } else if (data.download_url) {
-                    videoDirectUrl = data.download_url;
+                if (data.videoUrlNoWatermark || data.video_no_watermark) {
+                    videoDirectUrl = data.videoUrlNoWatermark || data.video_no_watermark;
+                } else if (data.video || data.downloadUrl) {
+                    videoDirectUrl = data.video || data.downloadUrl;
                 } else if (data.data && data.data.play) {
                     videoDirectUrl = data.data.play;
                 } else if (data.links && data.links[0]) {
@@ -250,7 +248,7 @@
                     resultBox.style.display = "block";
                 } else {
                     resultBox.innerHTML = `
-                <p style="color: red; margin: 0;">No se pudo procesar la descarga de este video.</p>
+                <p style="color: red; margin: 0;">No se pudo extraer el enlace de este video.</p>
                 <p style="font-size: 11px; color: #999; margin-top: 5px;">Estructura del servidor: ${JSON.stringify(data)}</p>
             `;
                     resultBox.style.display = "block";
