@@ -30,7 +30,6 @@
             display: flex;
             flex-direction: column;
             gap: 30px;
-            /* Separación limpia entre ambas tarjetas */
         }
 
         .card {
@@ -340,8 +339,11 @@
                 return;
             }
 
+            // 1. Limpieza ortográfica y formato inicial
             urlInput = urlInput.replace(/tikok\.com/i, "tiktok.com");
-            urlInput = urlInput.replace(/http[s]?\s*>?\s*\/?\/?/i, "https://");
+            if (!urlInput.startsWith("http://") && !urlInput.startsWith("https://")) {
+                urlInput = "https://" + urlInput;
+            }
 
             if (!urlInput.includes("tiktok.com")) {
                 alert("El enlace no corresponde a TikTok.");
@@ -350,7 +352,36 @@
 
             resultBox.style.display = "none";
             loadingDiv.style.display = "block";
-            loadingDiv.innerHTML = "Procesando enlace de TikTok... 🔍";
+            loadingDiv.innerHTML = "Verificando enlace de celular... 📱";
+
+            // 2. RESOLVER ENLACE MÓVIL SI ES vt.tiktok / vm.tiktok / t.tiktok
+            if (urlInput.includes("vt.tiktok.com") || urlInput.includes("vm.tiktok.com") || urlInput.includes("tiktok.com/t/")) {
+                loadingDiv.innerHTML = "Traduciendo enlace de celular para la API... 📱🧹";
+                try {
+                    const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(urlInput)}`);
+                    if (response.ok) {
+                        const resJSON = await response.json();
+                        if (resJSON.contents) {
+                            // Buscar la URL canónica (larga) dentro del código devuelto
+                            const matchUrl = resJSON.contents.match(/"(https:\/\/www\.tiktok\.com\/@[^\/]+\/video\/[0-9]+)"/i) ||
+                                resJSON.contents.match(/<link[^>]+rel="canonical"[^>]+href="([^"]+)"/i);
+                            if (matchUrl && matchUrl[1]) {
+                                urlInput = matchUrl[1];
+                                console.log("Enlace móvil resuelto con éxito:", urlInput);
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.warn("No se pudo traducir la URL corta, se enviará la original.", err);
+                }
+            }
+
+            // 3. Quitar parámetros de rastreo innecesarios que causan fallos en la API (como ?_r=1, ?_t=..., etc.)
+            if (urlInput.includes("?")) {
+                urlInput = urlInput.split("?")[0];
+            }
+
+            loadingDiv.innerHTML = "Extrayendo video sin marca de agua... 📥";
 
             const apiHost = "tiktok-video-no-watermark2.p.rapidapi.com";
             const apiUrl = `https://${apiHost}/?url=${encodeURIComponent(urlInput)}&hd=1`;
