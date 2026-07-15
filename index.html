@@ -329,7 +329,7 @@
             }
         }
 
-        // ==================== TIKTOK FUNCIONALIDAD ====================
+
         // ==================== TIKTOK FUNCIONALIDAD ====================
         async function descargarTikTok() {
             let urlInput = document.getElementById("ttUrl").value.trim();
@@ -341,7 +341,7 @@
                 return;
             }
 
-            // Corrección ortográfica automática por si acaso
+            // Corrección de errores comunes al escribir
             urlInput = urlInput.replace(/tikok\.com/i, "tiktok.com");
 
             if (!urlInput.includes("tiktok.com")) {
@@ -351,46 +351,36 @@
 
             resultBox.style.display = "none";
             loadingDiv.style.display = "block";
-            loadingDiv.innerHTML = "Procesando enlace... 📱💻";
+            loadingDiv.innerHTML = "Procesando enlace de TikTok... 🚀";
 
-            // NOTA: Con esta nueva API ya no necesitamos traducir el enlace de celular en el código.
-            // La API recibe el enlace (vt.tiktok o largo) directamente y lo procesa en su servidor.
-
-            // DATOS EXACTOS DE TU NUEVA CAPTURA DE PANTALLA
-            const apiHost = "tiktok-video-downloader-api1.p.rapidapi.com";
-            const apiUrl = `https://${apiHost}/api/tiktok/links`;
+            // DATOS EXACTOS DE TU ÚLTIMA CAPTURA DE PANTALLA
+            const apiHost = "tiktok-video-downloader4.p.rapidapi.com";
+            const apiUrl = `https://${apiHost}/api/tiktok/download?url=${encodeURIComponent(urlInput)}`;
 
             try {
                 const respuesta = await fetch(apiUrl, {
-                    method: "POST",
+                    method: "GET",
                     headers: {
-                        "Content-Type": "application/json",
                         "x-rapidapi-key": apiKeyShared,
                         "x-rapidapi-host": apiHost
-                    },
-                    body: JSON.stringify({
-                        url: urlInput
-                    })
+                    }
                 });
 
                 const data = await respuesta.json();
                 console.log("Respuesta completa de TikTok:", data);
                 loadingDiv.style.display = "none";
 
-                let videoDirectUrl = "";
-                let audioDirectUrl = "";
-                let tituloVideo = "Video de TikTok";
+                // Mapeo adaptado según la estructura de la API tokapi/jd_api
+                let videoDirectUrl = data.video || data.nowatermark || (data.links && data.links[0]?.link) || "";
+                let audioDirectUrl = data.audio || data.music || "";
+                let tituloVideo = data.description || data.title || "Video de TikTok";
+
+                // Intentamos buscar el thumbnail del autor o de la propiedad cover
                 let thumbnailVideo = "";
-
-                // Mapeo adaptado a la respuesta de esta API (usualmente entrega un nodo de descarga directa)
-                const resObj = data.data || data;
-
-                if (resObj) {
-                    // Extraer el video sin marca de agua (no_watermark, play, hd, etc.)
-                    videoDirectUrl = resObj.play || resObj.video || resObj.no_watermark || resObj.download_url || "";
-                    audioDirectUrl = resObj.music || resObj.audio || "";
-                    tituloVideo = resObj.title || resObj.description || "Video de TikTok";
-                    thumbnailVideo = resObj.cover || resObj.thumbnail || "";
+                if (data.author && data.author.avatar) {
+                    thumbnailVideo = data.author.avatar;
+                } else if (data.cover) {
+                    thumbnailVideo = data.cover;
                 }
 
                 if (videoDirectUrl) {
@@ -409,15 +399,15 @@
                     resultBox.style.display = "block";
                 } else {
                     resultBox.innerHTML = `
-                        <p style="color: #ff3366; font-size: 13px;">No se pudo extraer el enlace de este video.</p>
-                        <p style="font-size: 11px; color: #999; margin-top: 5px;">Detalles: El servidor no devolvió una URL de reproducción directa.</p>
+                        <p style="color: #ff3366; font-size: 13px;">No se pudo extraer el enlace directo de este video.</p>
+                        <p style="font-size: 11px; color: #999; margin-top: 5px;">Detalles: Asegúrate de que el video sea público.</p>
                     `;
                     resultBox.style.display = "block";
                 }
             } catch (error) {
                 console.error("Error en TikTok:", error);
                 loadingDiv.style.display = "none";
-                resultBox.innerHTML = `<p style="color: #ff3366; font-size: 13px;">Error de conexión con el servidor de TikTok.</p>`;
+                resultBox.innerHTML = `<p style="color: #ff3366; font-size: 13px;">Error de conexión con el servidor de TikTok. Inténtalo de nuevo.</p>`;
                 resultBox.style.display = "block";
             }
         }
