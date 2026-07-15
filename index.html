@@ -340,7 +340,7 @@
                 return;
             }
 
-            // Corrección en caso de error ortográfico al pegar
+            // Corrección ortográfica automática
             urlInput = urlInput.replace(/tikok\.com/i, "tiktok.com");
 
             if (!urlInput.includes("tiktok.com")) {
@@ -352,7 +352,7 @@
             loadingDiv.style.display = "block";
             loadingDiv.innerHTML = "Verificando enlace móvil... 📱💻";
 
-            // --- RESOLVER URL CORTA DE CELULAR (vt.tiktok / vm.tiktok) ---
+            // --- RESOLVER URL CORTA DE CELULAR ---
             if (urlInput.includes("vt.") || urlInput.includes("vm.") || urlInput.includes("/t/")) {
                 loadingDiv.innerHTML = "Traduciendo enlace de celular... ⚙️";
                 try {
@@ -364,18 +364,17 @@
                                 resJSON.contents.match(/<link[^>]+rel="canonical"[^>]+href="([^"]+)"/i);
                             if (matchUrl && matchUrl[1]) {
                                 urlInput = matchUrl[1];
-                                console.log("URL de TikTok resuelta:", urlInput);
+                                console.log("URL de TikTok resuelta con éxito:", urlInput);
                             }
                         }
                     }
                 } catch (err) {
-                    console.warn("No se pudo traducir automáticamente, enviando original.", err);
+                    console.warn("Error resolviendo URL corta, se enviará original.", err);
                 }
             }
 
             loadingDiv.innerHTML = "Removiendo marca de agua desde el servidor... 🚀";
 
-            // API de TikTok sin marca de agua con método POST
             const apiHost = "social-media-video-downloader-no-watermark.p.rapidapi.com";
             const apiUrl = `https://${apiHost}/api/v1/video`;
 
@@ -393,21 +392,34 @@
                 });
 
                 const data = await respuesta.json();
+                console.log("Respuesta completa de TikTok:", data);
                 loadingDiv.style.display = "none";
 
-                const resObj = data.data || data;
-
+                // Mapeo adaptado con precisión para la respuesta de la API "social-media-video-downloader-no-watermark"
                 let videoDirectUrl = "";
                 let audioDirectUrl = "";
                 let tituloVideo = "Video de TikTok";
                 let thumbnailVideo = "";
 
-                if (resObj) {
-                    videoDirectUrl = resObj.hd_video || resObj.video || resObj.url || "";
-                    audioDirectUrl = resObj.audio || resObj.music || "";
-                    tituloVideo = resObj.title || resObj.description || "Video de TikTok";
-                    thumbnailVideo = resObj.thumbnail || resObj.cover || "";
+                // Esta API suele estructurar las descargas en un array de enlaces o bajo un objeto principal.
+                // Evaluamos los nodos más comunes en este backend:
+                if (data.links && data.links.length > 0) {
+                    // Si viene como lista de links, buscamos el video sin marca de agua
+                    const hdVideo = data.links.find(l => l.type === 'video' || l.quality === 'hd' || l.quality === 'watermark_removed');
+                    const anyVideo = data.links.find(l => l.type === 'video');
+                    const anyAudio = data.links.find(l => l.type === 'audio');
+
+                    videoDirectUrl = hdVideo ? hdVideo.link : (anyVideo ? anyVideo.link : "");
+                    audioDirectUrl = anyAudio ? anyAudio.link : "";
+                } else {
+                    // Estructura alternativa directa
+                    const target = data.data || data;
+                    videoDirectUrl = target.hd_video || target.video_no_watermark || target.video || target.url || "";
+                    audioDirectUrl = target.audio || target.music || target.musicUrl || "";
                 }
+
+                tituloVideo = data.title || data.description || (data.data && data.data.title) || "Video de TikTok";
+                thumbnailVideo = data.thumbnail || data.cover || (data.data && data.data.cover) || "";
 
                 if (videoDirectUrl) {
                     resultBox.innerHTML = `
@@ -424,11 +436,11 @@
                     `;
                     resultBox.style.display = "block";
                 } else {
-                    resultBox.innerHTML = `<p style="color: #ff3366; font-size: 13px;">La plataforma devolvió un error: ${resObj?.message || 'No se encontró enlace'}</p>`;
+                    resultBox.innerHTML = `<p style="color: #ff3366; font-size: 13px;">No se pudo extraer el enlace de este video.</p>`;
                     resultBox.style.display = "block";
                 }
             } catch (error) {
-                console.error(error);
+                console.error("Error en TikTok:", error);
                 loadingDiv.style.display = "none";
                 resultBox.innerHTML = `<p style="color: #ff3366; font-size: 13px;">Error de conexión con el servidor de TikTok.</p>`;
                 resultBox.style.display = "block";
