@@ -204,7 +204,8 @@
 
             try {
                 // Usamos el endpoint '/download' pasándole la URL del video de TikTok
-                const respuesta = await fetch(`https://${apiHost}/download?url=${encodeURIComponent(urlInput)}`, {
+                // REEMPLÁZALA POR ESTA (que es la que usa la API que tienes abierta en pantalla):
+                const respuesta = await fetch(`https://${apiHost}/v1/tiktok?url=${encodeURIComponent(urlInput)}`, {
                     method: "GET",
                     headers: {
                         "x-rapidapi-key": apiKey,
