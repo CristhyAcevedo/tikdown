@@ -187,21 +187,24 @@
 
     <script>
         async function buscarVideo() {
-            const urlInput = document.getElementById("urlInput").value.trim();
-            const resultadoDiv = document.getElementById("resultado");
+            const urlInput = document.getElementById("videoUrl").value.trim();
+            const loadingDiv = document.getElementById("loading");
+            const resultBox = document.getElementById("resultBox");
 
             if (!urlInput) {
                 alert("Por favor, pega un enlace válido.");
                 return;
             }
 
-            resultadoDiv.innerHTML = "<p>Procesando video... Por favor espera.</p>";
+            // Ocultar resultados anteriores y mostrar cargando
+            resultBox.style.display = "none";
+            loadingDiv.style.display = "block";
+            loadingDiv.innerHTML = "Procesando video... Por favor espera.";
 
-            // Configuración con tus credenciales de RapidAPI extraídas
+            // Configuración con tus credenciales de RapidAPI
             const apiKey = "ce4f3137a6msh147a7c0728f1066p18b384jsn9a92f89e1387";
             const apiHost = "all-social-media-video-downloader3.p.rapidapi.com";
 
-            // Construimos los datos en formato x-www-form-urlencoded
             const detallesEnvio = new URLSearchParams();
             detallesEnvio.append("url", urlInput);
 
@@ -219,28 +222,37 @@
                 const data = await respuesta.json();
                 console.log(data); // Imprime el JSON completo para auditoría en consola
 
+                loadingDiv.style.display = "none";
+
                 if (data.success && data.links && data.links.length > 0) {
-                    // Extrae el enlace del primer nodo disponible en el arreglo
                     const videoDirectUrl = data.links[0].link;
                     const tituloVideo = data.title || "Video Descargado";
+                    const autorVideo = data.author || "Desconocido";
+                    const thumbnailVideo = data.thumbnail || "";
 
-                    resultadoDiv.innerHTML = `
-                        <div style="margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #fff;">
-                            <img src="${data.thumbnail || ''}" alt="Miniatura" style="max-width: 120px; border-radius: 6px; margin-bottom: 10px;">
-                            <h3 style="margin: 5px 0; font-size: 16px;">${tituloVideo}</h3>
-                            <p style="margin: 5px 0; color: #777; font-size: 14px;">Autor: ${data.author || "Desconocido"}</p>
-                            <a href="${videoDirectUrl}" target="_blank" download class="btn-download">
-                                📥 Descargar Video
-                            </a>
+                    // Actualizar el contenido de resultBox con la información del video
+                    resultBox.innerHTML = `
+                        <div style="margin-bottom: 15px;">
+                            ${thumbnailVideo ? `<img src="${thumbnailVideo}" alt="Miniatura" style="max-width: 120px; border-radius: 6px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">` : ""}
+                            <h3 style="margin: 5px 0; font-size: 16px; color: #333;">${tituloVideo}</h3>
+                            <p style="margin: 5px 0; color: #777; font-size: 14px;">Autor: ${autorVideo}</p>
                         </div>
+                        <p><strong>¡Video encontrado!</strong> Ya puedes descargarlo sin marca de agua.</p>
+                        <a href="${videoDirectUrl}" target="_blank" download class="download-btn">
+                            📥 Descargar Video (.MP4)
+                        </a>
                     `;
+                    resultBox.style.display = "block";
                 } else {
-                    resultadoDiv.innerHTML = "<p style='color: red;'>No se pudo obtener el enlace de descarga. Intenta con otro video.</p>";
+                    resultBox.innerHTML = `<p style="color: red; margin: 0;">No se pudo obtener el enlace de descarga. Intenta con otro video.</p>`;
+                    resultBox.style.display = "block";
                 }
 
             } catch (error) {
                 console.error(error);
-                resultadoDiv.innerHTML = "<p style='color: red;'>Hubo un error al conectar con el servidor. Inténtalo de nuevo más tarde.</p>";
+                loadingDiv.style.display = "none";
+                resultBox.innerHTML = `<p style="color: red; margin: 0;">Hubo un error al conectar con el servidor. Inténtalo de nuevo más tarde.</p>`;
+                resultBox.style.display = "block";
             }
         }
     </script>
