@@ -198,13 +198,13 @@
             loadingDiv.style.display = "block";
             loadingDiv.innerHTML = "Procesando video... Por favor espera.";
 
-            // CONFIGURACIÓN DE TU NUEVA API (TRAÍDA DESDE TU CAPTURA DE PANTALLA)
+            // CONFIGURACIÓN EXACTA DE TU API SUSCRITA (DE TU PRIMERA CAPTURA)
             const apiKey = "ce4f3137a6msh147a7c0728f1066p18b384jsn9a92f89e1387";
-            const apiHost = "tiktok-downloader26.p.rapidapi.com";
+            const apiHost = "tiktok-video-downloader-api.p.rapidapi.com";
 
             try {
-                // Al ser un método GET, enviamos la URL directamente como parámetro en el enlace
-                const respuesta = await fetch(`https://${apiHost}/v1/tiktok?url=${encodeURIComponent(urlInput)}`, {
+                // Usamos el endpoint '/download' pasándole la URL del video de TikTok
+                const respuesta = await fetch(`https://${apiHost}/download?url=${encodeURIComponent(urlInput)}`, {
                     method: "GET",
                     headers: {
                         "x-rapidapi-key": apiKey,
@@ -213,30 +213,27 @@
                 });
 
                 const data = await respuesta.json();
-                console.log("Respuesta de la nueva API:", data);
+                console.log("Respuesta de la API Real:", data);
 
                 loadingDiv.style.display = "none";
 
-                // Esta API suele estructurar los datos dentro de un objeto 'data' o directo en la raíz.
-                // Evaluamos de forma inteligente las propiedades comunes para extraer el video sin marca de agua (no_watermark / no_wm / video)
-                const resData = data.data || data;
-
+                // Mapeamos los datos según el estándar de esta API
+                // Normalmente devuelve un objeto directo con 'video' o en un nodo interno
                 let videoDirectUrl = "";
-                if (resData.no_watermark) {
-                    videoDirectUrl = resData.no_watermark;
-                } else if (resData.video) {
-                    videoDirectUrl = resData.video;
-                } else if (resData.play) {
-                    videoDirectUrl = resData.play;
-                } else if (resData.links && resData.links[0]) {
-                    videoDirectUrl = resData.links[0].link || resData.links[0];
+                if (data.video) {
+                    videoDirectUrl = data.video;
+                } else if (data.download_url) {
+                    videoDirectUrl = data.download_url;
+                } else if (data.data && data.data.play) {
+                    videoDirectUrl = data.data.play;
+                } else if (data.links && data.links[0]) {
+                    videoDirectUrl = data.links[0].link || data.links[0];
                 }
 
-                const tituloVideo = resData.title || resData.description || "Video Descargado";
-                const autorVideo = resData.author?.nickname || resData.author || "Desconocido";
-                const thumbnailVideo = resData.cover || resData.thumbnail || "";
+                const tituloVideo = data.title || data.description || "Video Descargado";
+                const autorVideo = data.author?.nickname || data.author || "Desconocido";
+                const thumbnailVideo = data.cover || data.thumbnail || "";
 
-                // Si la API respondió con un enlace de video válido
                 if (videoDirectUrl) {
                     resultBox.innerHTML = `
                 <div style="margin-bottom: 15px;">
