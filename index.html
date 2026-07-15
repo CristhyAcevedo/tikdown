@@ -194,6 +194,9 @@
             border-radius: 10px;
             font-weight: bold;
             font-size: 0.95rem;
+            cursor: pointer;
+            border: none;
+            text-align: center;
         }
 
         /* Botones de descarga Instagram */
@@ -221,6 +224,7 @@
 
     <div class="main-wrapper">
 
+        <!-- TARJETA INSTAGRAM -->
         <div class="card instagram-card">
             <h1 class="instagram-title">InstaDown</h1>
             <p class="subtitle">Descarga Reels, Fotos y Videos de Instagram</p>
@@ -236,6 +240,7 @@
             <div id="igResult" class="result-box"></div>
         </div>
 
+        <!-- TARJETA TIKTOK -->
         <div class="card tiktok-card">
             <h1 class="tiktok-title">TikDown</h1>
             <p class="subtitle">Descarga Videos de TikTok sin Marca de Agua</p>
@@ -254,6 +259,46 @@
 
     <script>
         const apiKeyShared = "ce4f3137a6msh147a7c0728f1066p18b384jsn9a92f89e1387";
+
+        // --- FUNCIÓN COMPARTIDA PARA DESCARGAR ARCHIVOS AL INSTANTE (FORZAR DESCARGA) ---
+        async function forzarDescarga(url, nombreArchivo, botonPresionado) {
+            const textoOriginal = botonPresionado.innerHTML;
+            botonPresionado.innerHTML = "Descargando archivo... ⏳";
+            botonPresionado.style.pointerEvents = "none";
+            botonPresionado.style.opacity = "0.7";
+
+            try {
+                // Hacemos un fetch a través de un proxy CORS público para evitar bloqueos del navegador
+                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+                const respuesta = await fetch(proxyUrl);
+
+                if (!respuesta.ok) throw new Error("Fallo al descargar");
+
+                const blob = await respuesta.blob();
+                const urlBlob = window.URL.createObjectURL(blob);
+
+                // Creamos un link temporal fantasma para gatillar la descarga directa
+                const linkTemporal = document.createElement("a");
+                linkTemporal.href = urlBlob;
+                linkTemporal.download = nombreArchivo;
+                document.body.appendChild(linkTemporal);
+                linkTemporal.click();
+
+                // Limpieza de memoria
+                document.body.removeChild(linkTemporal);
+                window.URL.revokeObjectURL(urlBlob);
+
+                botonPresionado.innerHTML = textoOriginal;
+            } catch (error) {
+                console.error("Error forzando descarga local, redirigiendo...", error);
+                // Si el proxy falla, abrimos el link original como último recurso alternativo
+                window.open(url, "_blank");
+                botonPresionado.innerHTML = textoOriginal;
+            } finally {
+                botonPresionado.style.pointerEvents = "auto";
+                botonPresionado.style.opacity = "1";
+            }
+        }
 
         // ==================== INSTAGRAM FUNCIONALIDAD ====================
         async function descargarInstagram() {
@@ -307,12 +352,12 @@
                             ${thumbnailVideo ? `<img src="${thumbnailVideo}" alt="Cover" style="max-width: 110px; border-radius: 12px; margin-bottom: 8px;">` : ""}
                             <h3 style="font-size: 14px; font-weight: 600; line-height: 1.4; color: #333;">${tituloVideo}</h3>
                         </div>
-                        <a href="${videoDirectUrl}" target="_blank" download="instagram_video.mp4" class="download-btn ig-dl-video">
+                        <button onclick="forzarDescarga('${videoDirectUrl}', 'instagram_video.mp4', this)" class="download-btn ig-dl-video">
                             🎥 Descargar Video
-                        </a>
-                        <a href="${audioDirectUrl || videoDirectUrl}" target="_blank" download="instagram_audio.mp3" class="download-btn ig-dl-audio">
+                        </button>
+                        <button onclick="forzarDescarga('${audioDirectUrl || videoDirectUrl}', 'instagram_audio.mp3', this)" class="download-btn ig-dl-audio">
                             🎵 Descargar MP3
-                        </a>
+                        </button>
                     `;
                     resultBox.style.display = "block";
                 } else {
@@ -339,7 +384,6 @@
                 return;
             }
 
-            // 1. Limpieza ortográfica y formato inicial
             urlInput = urlInput.replace(/tikok\.com/i, "tiktok.com");
             if (!urlInput.startsWith("http://") && !urlInput.startsWith("https://")) {
                 urlInput = "https://" + urlInput;
@@ -354,7 +398,6 @@
             loadingDiv.style.display = "block";
             loadingDiv.innerHTML = "Verificando enlace de celular... 📱";
 
-            // 2. RESOLVER ENLACE MÓVIL SI ES vt.tiktok / vm.tiktok / t.tiktok
             if (urlInput.includes("vt.tiktok.com") || urlInput.includes("vm.tiktok.com") || urlInput.includes("tiktok.com/t/")) {
                 loadingDiv.innerHTML = "Traduciendo enlace de celular para la API... 📱🧹";
                 try {
@@ -362,7 +405,6 @@
                     if (response.ok) {
                         const resJSON = await response.json();
                         if (resJSON.contents) {
-                            // Buscar la URL canónica (larga) dentro del código devuelto
                             const matchUrl = resJSON.contents.match(/"(https:\/\/www\.tiktok\.com\/@[^\/]+\/video\/[0-9]+)"/i) ||
                                 resJSON.contents.match(/<link[^>]+rel="canonical"[^>]+href="([^"]+)"/i);
                             if (matchUrl && matchUrl[1]) {
@@ -376,7 +418,6 @@
                 }
             }
 
-            // 3. Quitar parámetros de rastreo innecesarios que causan fallos en la API (como ?_r=1, ?_t=..., etc.)
             if (urlInput.includes("?")) {
                 urlInput = urlInput.split("?")[0];
             }
@@ -421,13 +462,13 @@
                             <p style="font-size: 12px; color: #aaa;">Plataforma: <strong style="color: #00f2fe;">TikTok</strong></p>
                         </div>
                         
-                        <a href="${videoDirectUrl}" target="_blank" download="tiktok_video.mp4" class="download-btn tt-dl-video">
+                        <button onclick="forzarDescarga('${videoDirectUrl}', 'tiktok_video.mp4', this)" class="download-btn tt-dl-video">
                             🎥 Descargar Video Completo (Sin Marca)
-                        </a>
+                        </button>
 
-                        <a href="${audioDirectUrl || videoDirectUrl}" target="_blank" download="tiktok_audio.mp3" class="download-btn tt-dl-audio">
+                        <button onclick="forzarDescarga('${audioDirectUrl || videoDirectUrl}', 'tiktok_audio.mp3', this)" class="download-btn tt-dl-audio">
                             🎵 Descargar Música (MP3)
-                        </a>
+                        </button>
                     `;
                     resultBox.style.display = "block";
                 } else {
