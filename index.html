@@ -242,8 +242,9 @@
             let apiHost = "";
 
             if (isInstagram) {
-                apiHost = "instagram-downloader-download-instagram-videos-stories.p.rapidapi.com";
-                apiUrl = `https://${apiHost}/index?url=${encodeURIComponent(urlInput)}`;
+                // DATOS CORREGIDOS SEGÚN TU CAPTURA DE PANTALLA
+                apiHost = "instagram-downloader-download-instagram-videos-stories1.p.rapidapi.com";
+                apiUrl = `https://${apiHost}/get-info-rapidapi?url=${encodeURIComponent(urlInput)}`;
             } else {
                 apiHost = "tiktok-video-downloader-api.p.rapidapi.com";
                 apiUrl = `https://${apiHost}/media?videoUrl=${encodeURIComponent(urlInput)}`;
@@ -269,11 +270,13 @@
                 let thumbnailVideo = "";
 
                 if (isInstagram) {
-                    videoDirectUrl = data.media || data.download_url || (data.links && data.links[0]?.link) || "";
+                    // Evaluamos dónde viene el video en la respuesta de esta API de Instagram
+                    videoDirectUrl = data.url || data.download_url || data.media || (data.links && data.links[0]?.link) || "";
                     audioDirectUrl = data.audio || "";
                     tituloVideo = data.title || "Publicación de Instagram";
                     thumbnailVideo = data.thumbnail || data.cover || "";
                 } else {
+                    // TikTok
                     if (data.videoUrlNoWatermark || data.video_no_watermark) {
                         videoDirectUrl = data.videoUrlNoWatermark || data.video_no_watermark;
                     } else if (data.video || data.downloadUrl) {
@@ -289,28 +292,30 @@
 
                 if (videoDirectUrl) {
                     resultBox.innerHTML = `
-                        <div style="margin-bottom: 15px;">
-                            ${thumbnailVideo ? `<img src="${thumbnailVideo}" alt="Miniatura" style="max-width: 110px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">` : ""}
-                            <h3 style="margin: 5px 0; font-size: 15px; color: #333; font-weight: 600;">${tituloVideo}</h3>
-                            <p style="margin: 5px 0; color: #666; font-size: 13px;">Plataforma detectada: <strong>${isInstagram ? 'Instagram' : 'TikTok'}</strong></p>
-                        </div>
-                        
-                        <p style="font-weight: bold; margin-bottom: 12px; font-size: 14px; color: #222;">¡Selecciona el formato de descarga!</p>
-                        
-                        <a href="${videoDirectUrl}" target="_blank" download="video.mp4" class="download-btn btn-video">
-                            🎥 Descargar Video Completo
-                        </a>
+                <div style="margin-bottom: 15px;">
+                    ${thumbnailVideo ? `<img src="${thumbnailVideo}" alt="Miniatura" style="max-width: 110px; border-radius: 8px; margin-bottom: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">` : ""}
+                    <h3 style="margin: 5px 0; font-size: 15px; color: #333; font-weight: 600;">${tituloVideo}</h3>
+                    <p style="margin: 5px 0; color: #666; font-size: 13px;">Plataforma detectada: <strong>${isInstagram ? 'Instagram' : 'TikTok'}</strong></p>
+                </div>
+                
+                <p style="font-weight: bold; margin-bottom: 12px; font-size: 14px; color: #222;">¡Selecciona el formato de descarga!</p>
+                
+                <!-- BOTÓN VIDEO -->
+                <a href="${videoDirectUrl}" target="_blank" download="video.mp4" class="download-btn btn-video">
+                    🎥 Descargar Video Completo
+                </a>
 
-                        <a href="${audioDirectUrl || videoDirectUrl}" target="_blank" download="audio.mp3" class="download-btn btn-audio">
-                            🎵 Descargar Solo Audio (MP3)
-                        </a>
-                    `;
+                <!-- BOTÓN AUDIO -->
+                <a href="${audioDirectUrl || videoDirectUrl}" target="_blank" download="audio.mp3" class="download-btn btn-audio">
+                    🎵 Descargar Solo Audio (MP3)
+                </a>
+            `;
                     resultBox.style.display = "block";
                 } else {
                     resultBox.innerHTML = `
-                        <p style="color: red; margin: 0; font-weight: 600;">No se pudo procesar este enlace.</p>
-                        <p style="font-size: 11px; color: #999; margin-top: 5px;">Detalles: ${JSON.stringify(data)}</p>
-                    `;
+                <p style="color: red; margin: 0; font-weight: 600;">No se pudo procesar este enlace.</p>
+                <p style="font-size: 11px; color: #999; margin-top: 5px;">Detalles: ${JSON.stringify(data)}</p>
+            `;
                     resultBox.style.display = "block";
                 }
 
