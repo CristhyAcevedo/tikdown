@@ -184,7 +184,7 @@
 
     <script>
         async function buscarVideo() {
-            const urlInput = document.getElementById("videoUrl").value.trim();
+            let urlInput = document.getElementById("videoUrl").value.trim();
             const loadingDiv = document.getElementById("loading");
             const resultBox = document.getElementById("resultBox");
 
@@ -196,6 +196,24 @@
             // Ocultar resultados anteriores y mostrar cargando
             resultBox.style.display = "none";
             loadingDiv.style.display = "block";
+            loadingDiv.innerHTML = "Procesando enlace de celular... Por favor espera.";
+
+            // --- BLOQUE ESPECIAL: Convertir enlaces de celular (vt.tiktok o vm.tiktok) a enlace largo ---
+            if (urlInput.includes("vt.tiktok.com") || urlInput.includes("vm.tiktok.com")) {
+                try {
+                    // Usamos un servicio gratuito de redirección para obtener la URL real y larga
+                    const bypassUrl = `https://corsproxy.io/?${encodeURIComponent(urlInput)}`;
+                    const response = await fetch(bypassUrl, { method: 'HEAD' });
+                    if (response.url) {
+                        urlInput = response.url;
+                        console.log("Enlace de celular convertido a largo:", urlInput);
+                    }
+                } catch (err) {
+                    console.warn("No se pudo expandir el enlace corto automáticamente, intentando enviar directo...", err);
+                }
+            }
+            // -----------------------------------------------------------------------------------------
+
             loadingDiv.innerHTML = "Procesando video... Por favor espera.";
 
             // DATOS EXACTOS DE TU CAPTURA
@@ -203,7 +221,7 @@
             const apiHost = "tiktok-video-downloader-api.p.rapidapi.com";
 
             try {
-                // Ajustado a /media y usando ?videoUrl= como pide la API
+                // Enviamos el videoUrl procesado
                 const respuesta = await fetch(`https://${apiHost}/media?videoUrl=${encodeURIComponent(urlInput)}`, {
                     method: "GET",
                     headers: {
@@ -217,7 +235,7 @@
 
                 loadingDiv.style.display = "none";
 
-                // Mapeamos de forma ultra-flexible según lo que suele devolver este endpoint específico
+                // Mapeamos los datos de descarga
                 let videoDirectUrl = "";
                 if (data.videoUrlNoWatermark || data.video_no_watermark) {
                     videoDirectUrl = data.videoUrlNoWatermark || data.video_no_watermark;
