@@ -331,6 +331,7 @@
 
 
         // ==================== TIKTOK FUNCIONALIDAD ====================
+        // ==================== TIKTOK FUNCIONALIDAD ====================
         async function descargarTikTok() {
             let urlInput = document.getElementById("ttUrl").value.trim();
             const loadingDiv = document.getElementById("ttLoading");
@@ -353,7 +354,6 @@
             loadingDiv.style.display = "block";
             loadingDiv.innerHTML = "Procesando enlace de TikTok... 🚀";
 
-            // DATOS EXACTOS DE TU ÚLTIMA CAPTURA DE PANTALLA
             const apiHost = "tiktok-video-downloader4.p.rapidapi.com";
             const apiUrl = `https://${apiHost}/api/tiktok/download?url=${encodeURIComponent(urlInput)}`;
 
@@ -370,17 +370,49 @@
                 console.log("Respuesta completa de TikTok:", data);
                 loadingDiv.style.display = "none";
 
-                // Mapeo adaptado según la estructura de la API tokapi/jd_api
-                let videoDirectUrl = data.video || data.nowatermark || (data.links && data.links[0]?.link) || "";
-                let audioDirectUrl = data.audio || data.music || "";
+                // --- DETECTOR INTELIGENTE DE VARIABLES (Busca en todas las estructuras posibles de la API) ---
+                let videoDirectUrl = "";
+                let audioDirectUrl = "";
                 let tituloVideo = data.description || data.title || "Video de TikTok";
-
-                // Intentamos buscar el thumbnail del autor o de la propiedad cover
                 let thumbnailVideo = "";
+
+                // 1. Intentar buscar la URL del video sin marca de agua en los nombres comunes
+                videoDirectUrl =
+                    data.video ||
+                    data.video_url ||
+                    data.download_url ||
+                    data.nowatermark ||
+                    data.play ||
+                    data.play_url ||
+                    (data.links && data.links[0]?.link) ||
+                    "";
+
+                // 2. Intentar buscar el audio/música
+                audioDirectUrl =
+                    data.audio ||
+                    data.music ||
+                    data.music_url ||
+                    data.audio_url ||
+                    "";
+
+                // 3. Intentar buscar la miniatura (avatar o cover)
                 if (data.author && data.author.avatar) {
                     thumbnailVideo = data.author.avatar;
                 } else if (data.cover) {
                     thumbnailVideo = data.cover;
+                } else if (data.thumbnail) {
+                    thumbnailVideo = data.thumbnail;
+                }
+
+                // --- SI LA URL PRINCIPAL NO APARRECIÓ, BUSCAMOS DENTRO DE SUB-OBJETOS COMUNES ---
+                if (!videoDirectUrl) {
+                    // Buscar en data.data o data.video
+                    const subObj = data.data || data.video || data.links;
+                    if (subObj) {
+                        videoDirectUrl = subObj.play || subObj.url || subObj.download_url || subObj.no_watermark || subObj.link || "";
+                        audioDirectUrl = audioDirectUrl || subObj.music || subObj.audio || "";
+                        thumbnailVideo = thumbnailVideo || subObj.cover || subObj.thumbnail || "";
+                    }
                 }
 
                 if (videoDirectUrl) {
@@ -398,9 +430,12 @@
                     `;
                     resultBox.style.display = "block";
                 } else {
+                    // Si todo falla, te mostramos en pantalla lo que la API nos respondió exactamente para ver dónde está el video
                     resultBox.innerHTML = `
-                        <p style="color: #ff3366; font-size: 13px;">No se pudo extraer el enlace directo de este video.</p>
-                        <p style="font-size: 11px; color: #999; margin-top: 5px;">Detalles: Asegúrate de que el video sea público.</p>
+                        <p style="color: #ff3366; font-size: 13px; font-weight: bold;">No se encontró el enlace directo en la respuesta.</p>
+                        <p style="font-size: 11px; color: #aaa; margin-top: 5px; text-align: left; background: #222; padding: 10px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap;">
+                            Respuesta del Servidor: ${JSON.stringify(data, null, 2)}
+                        </p>
                     `;
                     resultBox.style.display = "block";
                 }
