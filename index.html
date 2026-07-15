@@ -332,117 +332,129 @@
 
         // ==================== TIKTOK FUNCIONALIDAD ====================
         // ==================== TIKTOK FUNCIONALIDAD ====================
-        async function descargarTikTok() {
-            let urlInput = document.getElementById("ttUrl").value.trim();
-            const loadingDiv = document.getElementById("ttLoading");
-            const resultBox = document.getElementById("ttResult");
+        async function procesarDescarga() {
+            let urlInput = document.getElementById("mediaUrl").value.trim();
+            const loadingDiv = document.getElementById("loading");
+            const resultBox = document.getElementById("resultBox");
 
             if (!urlInput) {
-                alert("Por favor, pega un enlace de TikTok.");
+                alert("Por favor, pega un enlace válido.");
                 return;
             }
 
-            // Corrección de errores comunes al escribir
             urlInput = urlInput.replace(/tikok\.com/i, "tiktok.com");
-
-            if (!urlInput.includes("tiktok.com")) {
-                alert("El enlace no corresponde a TikTok.");
-                return;
-            }
+            urlInput = urlInput.replace(/http[s]?\s*>?\s*\/?\/?/i, "https://");
 
             resultBox.style.display = "none";
             loadingDiv.style.display = "block";
-            loadingDiv.innerHTML = "Procesando enlace de TikTok... 🚀";
+            loadingDiv.innerHTML = "Identificando plataforma... 🔍";
 
-            const apiHost = "tiktok-video-downloader4.p.rapidapi.com";
-            const apiUrl = `https://${apiHost}/api/tiktok/download?url=${encodeURIComponent(urlInput)}`;
+            const isInstagram = urlInput.includes("instagram.com");
+            const isTikTok = urlInput.includes("tiktok.com");
 
-            try {
-                const respuesta = await fetch(apiUrl, {
+            if (!isInstagram && !isTikTok) {
+                loadingDiv.style.display = "none";
+                alert("Por favor, introduce un enlace válido de TikTok o Instagram.");
+                return;
+            }
+
+            const apiKey = "ce4f3137a6msh147a7c0728f1066p18b384jsn9a92f89e1387";
+
+            let apiUrl = "";
+            let apiHost = "";
+            let fetchOptions = {};
+
+            if (isInstagram) {
+                loadingDiv.innerHTML = "Procesando enlace de Instagram... 📸";
+                if (urlInput.includes("?")) {
+                    urlInput = urlInput.split("?")[0];
+                }
+                apiHost = "instagram-downloader-download-instagram-videos-stories1.p.rapidapi.com";
+                apiUrl = `https://${apiHost}/get-info-rapidapi?url=${encodeURIComponent(urlInput)}`;
+                fetchOptions = {
                     method: "GET",
                     headers: {
-                        "x-rapidapi-key": apiKeyShared,
+                        "x-rapidapi-key": apiKey,
                         "x-rapidapi-host": apiHost
                     }
-                });
+                };
+            } else {
+                loadingDiv.innerHTML = "Procesando enlace de TikTok... 🎵";
 
+                // RUTA CORREGIDA CON ENFOQUE DIRECTO EN LA RAÍZ Y EL PARÁMETRO HD=1
+                apiHost = "tiktok-video-no-watermark2.p.rapidapi.com";
+                apiUrl = `https://${apiHost}/?url=${encodeURIComponent(urlInput)}&hd=1`;
+
+                fetchOptions = {
+                    method: "GET",
+                    headers: {
+                        "x-rapidapi-key": apiKey,
+                        "x-rapidapi-host": apiHost
+                    }
+                };
+            }
+
+            try {
+                const respuesta = await fetch(apiUrl, fetchOptions);
                 const data = await respuesta.json();
-                console.log("Respuesta completa de TikTok:", data);
+                console.log("Respuesta obtenida de la API:", data);
+
                 loadingDiv.style.display = "none";
 
-                // --- DETECTOR INTELIGENTE DE VARIABLES (Busca en todas las estructuras posibles de la API) ---
                 let videoDirectUrl = "";
                 let audioDirectUrl = "";
-                let tituloVideo = data.description || data.title || "Video de TikTok";
+                let tituloVideo = "Multimedia Encontrada";
                 let thumbnailVideo = "";
 
-                // 1. Intentar buscar la URL del video sin marca de agua en los nombres comunes
-                videoDirectUrl =
-                    data.video ||
-                    data.video_url ||
-                    data.download_url ||
-                    data.nowatermark ||
-                    data.play ||
-                    data.play_url ||
-                    (data.links && data.links[0]?.link) ||
-                    "";
-
-                // 2. Intentar buscar el audio/música
-                audioDirectUrl =
-                    data.audio ||
-                    data.music ||
-                    data.music_url ||
-                    data.audio_url ||
-                    "";
-
-                // 3. Intentar buscar la miniatura (avatar o cover)
-                if (data.author && data.author.avatar) {
-                    thumbnailVideo = data.author.avatar;
-                } else if (data.cover) {
-                    thumbnailVideo = data.cover;
-                } else if (data.thumbnail) {
-                    thumbnailVideo = data.thumbnail;
-                }
-
-                // --- SI LA URL PRINCIPAL NO APARRECIÓ, BUSCAMOS DENTRO DE SUB-OBJETOS COMUNES ---
-                if (!videoDirectUrl) {
-                    // Buscar en data.data o data.video
-                    const subObj = data.data || data.video || data.links;
-                    if (subObj) {
-                        videoDirectUrl = subObj.play || subObj.url || subObj.download_url || subObj.no_watermark || subObj.link || "";
-                        audioDirectUrl = audioDirectUrl || subObj.music || subObj.audio || "";
-                        thumbnailVideo = thumbnailVideo || subObj.cover || subObj.thumbnail || "";
+                if (isInstagram) {
+                    videoDirectUrl = data.url || data.download_url || data.media || (data.links && data.links[0]?.link) || "";
+                    audioDirectUrl = data.audio || "";
+                    tituloVideo = data.title || "Video de Instagram";
+                    thumbnailVideo = data.thumbnail || data.cover || "";
+                } else {
+                    // Mapeo flexible adaptado para tiktok-video-no-watermark2
+                    // Buscamos dentro de la raíz o dentro del nodo "data"
+                    const resObj = data.data || data;
+                    if (resObj) {
+                        // El video HD suele estar en hdplay, play o wmplay
+                        videoDirectUrl = resObj.hdplay || resObj.play || resObj.wmplay || resObj.video || "";
+                        audioDirectUrl = resObj.music || resObj.audio || "";
+                        tituloVideo = resObj.title || resObj.description || "Video de TikTok";
+                        thumbnailVideo = resObj.cover || resObj.origin_cover || "";
                     }
                 }
 
                 if (videoDirectUrl) {
                     resultBox.innerHTML = `
-                        <div style="margin-bottom: 15px;">
-                            ${thumbnailVideo ? `<img src="${thumbnailVideo}" alt="Cover" style="max-width: 110px; border-radius: 12px; margin-bottom: 8px;">` : ""}
-                            <h3 style="font-size: 14px; font-weight: 600; line-height: 1.4; color: #fff;">${tituloVideo}</h3>
+                        <div style="margin-bottom: 20px;">
+                            ${thumbnailVideo ? `<img src="${thumbnailVideo}" alt="Miniatura" style="max-width: 120px; border-radius: 12px; margin-bottom: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">` : ""}
+                            <h3 style="font-size: 15px; font-weight: 600; line-height: 1.4; color: #fff; margin-bottom: 5px;">${tituloVideo}</h3>
+                            <p style="font-size: 12px; color: #aaa;">Plataforma: <strong style="color: ${isInstagram ? '#ff007f' : '#00f2fe'};">${isInstagram ? 'Instagram' : 'TikTok'}</strong></p>
                         </div>
-                        <a href="${videoDirectUrl}" target="_blank" download="tiktok_video.mp4" class="download-btn tt-dl-video">
-                            🎥 Descargar Video (Sin Marca de Agua)
+                        
+                        <a href="${videoDirectUrl}" target="_blank" download="media_file.mp4" class="download-btn btn-video">
+                            🎥 Descargar Video Completo
                         </a>
-                        <a href="${audioDirectUrl || videoDirectUrl}" target="_blank" download="tiktok_audio.mp3" class="download-btn tt-dl-audio">
-                            🎵 Descargar Música (MP3)
+
+                        <a href="${audioDirectUrl || videoDirectUrl}" target="_blank" download="media_audio.mp3" class="download-btn btn-audio">
+                            🎵 Descargar Solo Audio (MP3)
                         </a>
                     `;
                     resultBox.style.display = "block";
                 } else {
-                    // Si todo falla, te mostramos en pantalla lo que la API nos respondió exactamente para ver dónde está el video
                     resultBox.innerHTML = `
-                        <p style="color: #ff3366; font-size: 13px; font-weight: bold;">No se encontró el enlace directo en la respuesta.</p>
-                        <p style="font-size: 11px; color: #aaa; margin-top: 5px; text-align: left; background: #222; padding: 10px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap;">
-                            Respuesta del Servidor: ${JSON.stringify(data, null, 2)}
+                        <p style="color: #ff007f; font-weight: 600; font-size: 14px;">La API no devolvió enlaces directos.</p>
+                        <p style="font-size: 11px; color: #888; margin-top: 8px; text-align: left; background: #222; padding: 10px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap;">
+                            Respuesta del servidor: ${JSON.stringify(data)}
                         </p>
                     `;
                     resultBox.style.display = "block";
                 }
+
             } catch (error) {
-                console.error("Error en TikTok:", error);
+                console.error("Error al procesar descarga:", error);
                 loadingDiv.style.display = "none";
-                resultBox.innerHTML = `<p style="color: #ff3366; font-size: 13px;">Error de conexión con el servidor de TikTok. Inténtalo de nuevo.</p>`;
+                resultBox.innerHTML = `<p style="color: #ff007f; font-weight: 600;">Hubo un error al conectar con el servidor. Asegúrate de estar suscrita a la API de TikTok.</p>`;
                 resultBox.style.display = "block";
             }
         }
