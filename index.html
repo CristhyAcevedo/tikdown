@@ -187,58 +187,64 @@
 
     <script>
         async function buscarVideo() {
-            const urlInput = document.getElementById('videoUrl').value.trim();
-            const btn = document.getElementById('btnFetch');
-            const loading = document.getElementById('loading');
-            const resultBox = document.getElementById('resultBox');
-            const downloadLink = document.getElementById('downloadLink');
+            const urlInput = document.getElementById("urlInput").value.trim();
+            const resultadoDiv = document.getElementById("resultado");
 
             if (!urlInput) {
-                alert('Por favor, ingresa un enlace válido.');
+                alert("Por favor, pega un enlace válido.");
                 return;
             }
 
-            // Cambiar estados visuales
-            btn.disabled = true;
-            loading.style.display = 'block';
-            resultBox.style.display = 'none';
+            resultadoDiv.innerHTML = "<p>Procesando video... Por favor espera.</p>";
 
-            // REEMPLAZA ESTO: Pon aquí tus datos de RapidAPI cuando te registres
-            const apiKey = "TU_RAPIDAPI_KEY_AQUI";
-            const apiHost = "tiktok-video-no-watermark.p.rapidapi.com"; // Asegúrate de que coincida con la API que elijas
+            // Configuración con tus credenciales de RapidAPI extraídas
+            const apiKey = "ce4f3137a6msh147a7c0728f1066p18b384jsn9a92f89e1387";
+            const apiHost = "all-social-media-video-downloader3.p.rapidapi.com";
+
+            // Construimos los datos en formato x-www-form-urlencoded
+            const detallesEnvio = new URLSearchParams();
+            detallesEnvio.append("url", urlInput);
 
             try {
-                // Hacemos la consulta a la API usando el enlace que pegó el usuario
-                const response = await fetch(`https://${apiHost}/api/posts?url=${encodeURIComponent(urlInput)}`, {
-                    method: 'GET',
+                const respuesta = await fetch(`https://${apiHost}/index.php`, {
+                    method: "POST",
                     headers: {
-                        'x-rapidapi-key': apiKey,
-                        'x-rapidapi-host': apiHost
-                    }
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        "x-rapidapi-key": apiKey,
+                        "x-rapidapi-host": apiHost
+                    },
+                    body: detallesEnvio
                 });
 
-                const data = await response.json();
+                const data = await respuesta.json();
+                console.log(data); // Imprime el JSON completo para auditoría en consola
 
-                // Dependiendo de la estructura de la API elegida, extraemos el link directo de descarga.
-                // Usualmente devuelven un objeto con un campo "data.play" o "download_url"
-                const videoDirectUrl = data.data.play;
+                if (data.success && data.links && data.links.length > 0) {
+                    // Extrae el enlace del primer nodo disponible en el arreglo
+                    const videoDirectUrl = data.links[0].link;
+                    const tituloVideo = data.title || "Video Descargado";
 
-                if (videoDirectUrl) {
-                    downloadLink.href = videoDirectUrl;
-                    resultBox.style.display = 'block';
+                    resultadoDiv.innerHTML = `
+                        <div style="margin-top: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #fff;">
+                            <img src="${data.thumbnail || ''}" alt="Miniatura" style="max-width: 120px; border-radius: 6px; margin-bottom: 10px;">
+                            <h3 style="margin: 5px 0; font-size: 16px;">${tituloVideo}</h3>
+                            <p style="margin: 5px 0; color: #777; font-size: 14px;">Autor: ${data.author || "Desconocido"}</p>
+                            <a href="${videoDirectUrl}" target="_blank" download class="btn-download">
+                                📥 Descargar Video
+                            </a>
+                        </div>
+                    `;
                 } else {
-                    alert('No se pudo obtener el enlace de descarga directo. Inténtalo de nuevo.');
+                    resultadoDiv.innerHTML = "<p style='color: red;'>No se pudo obtener el enlace de descarga. Intenta con otro video.</p>";
                 }
 
             } catch (error) {
                 console.error(error);
-                alert('Hubo un error al procesar el enlace. Verifica que sea un video público.');
-            } finally {
-                btn.disabled = false;
-                loading.style.display = 'none';
+                resultadoDiv.innerHTML = "<p style='color: red;'>Hubo un error al conectar con el servidor. Inténtalo de nuevo más tarde.</p>";
             }
         }
     </script>
+
 </body>
 
 </html>
